@@ -1,10 +1,12 @@
 class Processo:
-    def __init__(self, pid, tipo, prioridade, tempo_execucao, blocos_memoria):
+    def __init__(self, pid, tipo, prioridade, tempo_execucao, blocos_memoria, recursos_necessarios=None, operacoes_io=None):
         self.pid = pid
         self.tipo = tipo  # 'RT' ou 'USER'
         self.prioridade = prioridade  # 0 para RT, 1-5 para USER
         self.tempo_execucao = tempo_execucao
         self.blocos_memoria = blocos_memoria
+        self.recursos_necessarios = recursos_necessarios if recursos_necessarios else []
+        self.operacoes_io = operacoes_io if operacoes_io else []
         self.tempo_restante = tempo_execucao
         self.tempo_espera = 0
         
