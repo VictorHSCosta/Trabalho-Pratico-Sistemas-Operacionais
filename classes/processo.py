@@ -1,9 +1,10 @@
 class Processo:
-    def __init__(self, pid, tipo, prioridade, tempo_execucao):
+    def __init__(self, pid, tipo, prioridade, tempo_execucao, blocos_memoria):
         self.pid = pid
         self.tipo = tipo  # 'RT' ou 'USER'
         self.prioridade = prioridade  # 0 para RT, 1-5 para USER
         self.tempo_execucao = tempo_execucao
+        self.blocos_memoria = blocos_memoria
         self.tempo_restante = tempo_execucao
         self.tempo_espera = 0
         
@@ -20,4 +21,4 @@ class Processo:
             self.quantum = self._definir_quantum(nova_prioridade)
 
     def __repr__(self):
-        return f"[PID: {self.pid} | Tipo: {self.tipo} | Prio: {self.prioridade} | Restante: {self.tempo_restante}s]"
+        return f"[PID: {self.pid} | Tipo: {self.tipo} | Prio: {self.prioridade} | Mem: {self.blocos_memoria} | Restante: {self.tempo_restante}s]"
