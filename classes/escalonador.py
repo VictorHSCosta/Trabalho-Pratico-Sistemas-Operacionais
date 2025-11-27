@@ -2,7 +2,7 @@ import time
 from collections import deque
 
 class Escalonador:
-    def __init__(self):
+    def __init__(self, gerenciador_recursos=None, sistema_arquivos=None):
         self.fila_global = deque() # Fila de entrada
         self.fila_rt = deque()     # Fila Tempo Real (Prio 0)
         self.filas_usuario = {
@@ -14,6 +14,8 @@ class Escalonador:
         }
         self.tempo_limite_aging = 10  # Ciclos de espera para promover processo
         self.max_processos = 100
+        self.gerenciador_recursos = gerenciador_recursos
+        self.sistema_arquivos = sistema_arquivos
 
     def adicionar_processo(self, processo):
         if len(self.fila_global) + self._total_processos_ativos() < self.max_processos:
@@ -72,6 +74,10 @@ class Escalonador:
         proc = self.fila_rt[0] # FIFO: olha o primeiro sem remover ainda
         print(f"> Executando RT {proc.pid} (Não-preemptivo)...")
         
+        # Executa operações de I/O (RT não precisa de recursos de hardware)
+        if self.sistema_arquivos:
+            self._executar_operacoes_io(proc)
+        
         # Simula execução completa
         tempo_gasto = proc.tempo_restante
         time.sleep(1) # Simulação visual
@@ -85,11 +91,22 @@ class Escalonador:
         fila = self.filas_usuario[prio_atual]
         proc = fila.popleft()
         
+        # Tenta alocar recursos (se necessário)
+        if self.gerenciador_recursos and proc.recursos_necessarios:
+            if not self.gerenciador_recursos.alocar(proc):
+                print(f"  Processo {proc.pid} não conseguiu recursos. Retornando à fila.")
+                fila.append(proc) # Volta para o fim da fila
+                return
+        
         quantum = proc.quantum
         tempo_exec = min(proc.tempo_restante, quantum)
         
         print(f"> Executando Usuário {proc.pid} (Prio {proc.prioridade}) por {tempo_exec}s...")
         time.sleep(0.5) # Simulação visual
+        
+        # Executa operações de I/O
+        if self.sistema_arquivos:
+            self._executar_operacoes_io(proc)
         
         proc.tempo_restante -= tempo_exec
         self._incrementar_espera_outros(tempo_exec)
@@ -103,9 +120,16 @@ class Escalonador:
             else:
                 print(f"  Processo {proc.pid} sofreu preempção. Mantém prioridade {proc.prioridade}.")
             
+            # Libera recursos antes de voltar para a fila
+            if self.gerenciador_recursos:
+                self.gerenciador_recursos.liberar(proc)
+            
             self.filas_usuario[nova_prio].append(proc)
         else:
             print(f"  Processo Usuário {proc.pid} finalizado.")
+            # Libera recursos ao terminar
+            if self.gerenciador_recursos:
+                self.gerenciador_recursos.liberar(proc)
 
     def _incrementar_espera_outros(self, tempo):
         """Incrementa tempo de espera para todos os processos nas filas de usuário"""
@@ -138,3 +162,13 @@ class Escalonador:
             if fila:
                 return True
         return False
+
+    def _executar_operacoes_io(self, processo):
+        """Executa operações de I/O do processo"""
+        for operacao in processo.operacoes_io:
+            if operacao[0] == 'criar':
+                _, nome, tamanho = operacao
+                self.sistema_arquivos.criar_arquivo(processo, nome, tamanho)
+            elif operacao[0] == 'deletar':
+                _, nome = operacao
+                self.sistema_arquivos.deletar_arquivo(processo, nome)
