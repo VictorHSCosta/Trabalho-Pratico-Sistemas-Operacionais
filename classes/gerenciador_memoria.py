@@ -29,6 +29,7 @@ class GerenciadorMemoria:
                 if contador_livres == blocos_necessarios:
                     # Encontrou espaço suficiente, aloca
                     self._preencher_memoria(indice_inicio_livre, blocos_necessarios, processo.pid)
+                    processo.offset = indice_inicio_livre
                     return True
             else:
                 contador_livres = 0
@@ -43,6 +44,8 @@ class GerenciadorMemoria:
             if self.memoria[i] == pid:
                 self.memoria[i] = None
                 desalocou = True
+        if desalocou:
+            processo.offset = None
         return desalocou
 
     def _preencher_memoria(self, inicio, tamanho, pid):
