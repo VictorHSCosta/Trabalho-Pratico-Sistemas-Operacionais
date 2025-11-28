@@ -5,6 +5,7 @@ class SistemaArquivos:
         self.disco = [None] * total_blocos
         # Tabela de arquivos: Nome -> {criador: PID, inicio: int, tamanho: int}
         self.arquivos = {}
+        self.ultimo_resultado = None
 
     def inicializar_disco(self, arquivos_iniciais):
         """Inicializa o disco com arquivos pré-existentes"""
@@ -16,10 +17,12 @@ class SistemaArquivos:
             else:
                 print(f"Erro: Arquivo {nome} excede tamanho do disco.")
 
-    def criar_arquivo(self, processo, nome, tamanho):
+    def criar_arquivo(self, processo, nome, tamanho, verbose=True):
         """Cria um arquivo usando First-Fit"""
         if nome in self.arquivos:
-            print(f"Erro: Arquivo {nome} já existe.")
+            if verbose:
+                print(f"Erro: Arquivo {nome} já existe.")
+            self._registrar_resultado(False, motivo="arquivo_existente")
             return False
 
         # Busca First-Fit
@@ -36,19 +39,25 @@ class SistemaArquivos:
                     # Aloca
                     self._gravar_disco(indice_inicio_livre, tamanho, nome)
                     self.arquivos[nome] = {'criador': processo.pid, 'inicio': indice_inicio_livre, 'tamanho': tamanho}
-                    print(f"Processo {processo.pid} criou arquivo '{nome}' (Blocos {indice_inicio_livre}-{indice_inicio_livre+tamanho-1}).")
+                    if verbose:
+                        print(f"Processo {processo.pid} criou arquivo '{nome}' (Blocos {indice_inicio_livre}-{indice_inicio_livre+tamanho-1}).")
+                    self._registrar_resultado(True, inicio=indice_inicio_livre, tamanho=tamanho)
                     return True
             else:
                 contador_livres = 0
                 indice_inicio_livre = -1
         
-        print(f"Processo {processo.pid} falhou ao criar arquivo '{nome}' (Sem espaço).")
+        if verbose:
+            print(f"Processo {processo.pid} falhou ao criar arquivo '{nome}' (Sem espaço).")
+        self._registrar_resultado(False, motivo="sem_espaco")
         return False
 
-    def deletar_arquivo(self, processo, nome):
+    def deletar_arquivo(self, processo, nome, verbose=True):
         """Deleta arquivo verificando permissões"""
         if nome not in self.arquivos:
-            print(f"Erro: Arquivo {nome} não existe.")
+            if verbose:
+                print(f"Erro: Arquivo {nome} não existe.")
+            self._registrar_resultado(False, motivo="inexistente")
             return False
 
         info = self.arquivos[nome]
@@ -65,10 +74,14 @@ class SistemaArquivos:
         if pode_deletar:
             self._limpar_disco(info['inicio'], info['tamanho'])
             del self.arquivos[nome]
-            print(f"Processo {processo.pid} deletou arquivo '{nome}'.")
+            if verbose:
+                print(f"Processo {processo.pid} deletou arquivo '{nome}'.")
+            self._registrar_resultado(True)
             return True
         else:
-            print(f"Processo {processo.pid} negado ao deletar '{nome}' (Permissão insuficiente).")
+            if verbose:
+                print(f"Processo {processo.pid} negado ao deletar '{nome}' (Permissão insuficiente).")
+            self._registrar_resultado(False, motivo="permissao")
             return False
 
     def _gravar_disco(self, inicio, tamanho, valor):
@@ -87,3 +100,14 @@ class SistemaArquivos:
             mapa_visual += f"[{val}]"
         print(mapa_visual)
         print("---------------------\n")
+
+    def mapa_ocupacao(self):
+        return [bloco if bloco else "0" for bloco in self.disco]
+
+    def _registrar_resultado(self, sucesso, motivo=None, inicio=None, tamanho=None):
+        self.ultimo_resultado = {
+            'sucesso': sucesso,
+            'motivo': motivo,
+            'inicio': inicio,
+            'tamanho': tamanho,
+        }
