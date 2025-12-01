@@ -1,32 +1,22 @@
 from utils.saida import imprimir_despacho, formatar_blocos
+from classes.escalonador import Escalonador
 
+escalonador = Escalonador()
 
 def simular_processos(processos, gerenciador_memoria, gerenciador_recursos):
-    """Executa alocação, simulação de instruções e liberação de cada processo."""
+    # Inicializa o escalonador passando as dependências
+    escalonador = Escalonador(
+        gerenciador_recursos=gerenciador_recursos,
+        gerenciador_memoria=gerenciador_memoria
+    ) # O sistema de arquivos é passado na main ou ajustado aqui se necessário
+
+    # Ordena por chegada e adiciona TODOS à fila global
+    processos.sort(key=lambda x: x.tempo_inicio)
     for processo in processos:
-        alocou_memoria = gerenciador_memoria.alocar(processo)
-        imprimir_despacho(processo)
-
-        if not alocou_memoria:
-            print(f"process {processo.pid} =>")
-            print(f"P{processo.pid} NAO INICIADO (sem memoria)")
-            continue
-
-        recursos_ok = gerenciador_recursos.alocar(processo)
-        if not recursos_ok:
-            print(f"process {processo.pid} =>")
-            print(f"P{processo.pid} NAO INICIADO (recursos indisponiveis)")
-            gerenciador_memoria.desalocar(processo)
-            continue
-
-        print(f"process {processo.pid} =>")
-        print(f"P{processo.pid} STARTED")
-        for instrucao in range(1, processo.tempo_execucao + 1):
-            print(f"P{processo.pid} instruction {instrucao}")
-        print(f"P{processo.pid} return SIGINT")
-
-        gerenciador_recursos.liberar(processo)
-        gerenciador_memoria.desalocar(processo)
+        escalonador.adicionar_processo(processo)
+    
+    # O Escalonador assume o controle total da simulação
+    escalonador.executar()
 
 
 def executar_operacoes_sistema_arquivos(fs, operacoes, processos):

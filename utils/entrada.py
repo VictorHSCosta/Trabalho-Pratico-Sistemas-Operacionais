@@ -3,12 +3,13 @@ from pathlib import Path
 
 
 def split_campos(linha):
-    """Divide uma linha em campos, ignorando separadores comuns."""
+    """Divide uma linha em campos, ignorando separadores comuns. Retorna uma lista desses valores individuais"""
     return [campo for campo in re.split(r"[\s,;]+", linha.strip()) if campo]
 
-
-def resolver_caminhos(args, base):
-    """Resolve caminhos de entrada a partir dos argumentos ou usa o padrão em entradas/."""
+#alteracao feita pra deixar claro que args é uma lista
+def resolver_caminhos(args : list, base):
+    """Resolve caminhos de entrada a partir dos argumentos ou usa o padrão em entradas/.
+       Retorna uma tupla (caminho_processos, caminho_arquivos)."""
     if len(args) >= 2:
         return Path(args[0]), Path(args[1])
 
@@ -16,7 +17,8 @@ def resolver_caminhos(args, base):
 
 
 def carregar_processos(caminho):
-    """Lê o arquivo de processos e devolve lista ordenada por tempo de início."""
+    """Lê o arquivo de processos e devolve lista ordenada por tempo de início.
+       Retorna uma lista de objetos Processo."""
     processos = []
 
     from classes.processo import Processo  # import local para evitar ciclos
@@ -64,7 +66,8 @@ def carregar_processos(caminho):
 
 
 def carregar_operacoes_disco(caminho):
-    """Lê o arquivo de operações do disco e devolve (total_blocos, arquivos_iniciais, operacoes)."""
+    """Lê o arquivo de operações do disco e devolve (total_blocos, arquivos_iniciais, operacoes).
+       Retorna uma tupla com o total de blocos, uma lista de arquivos iniciais e uma lista de operações."""
     with open(caminho, "r", encoding="utf-8") as arquivo:
         linhas = [linha.strip() for linha in arquivo if linha.strip()]
 
