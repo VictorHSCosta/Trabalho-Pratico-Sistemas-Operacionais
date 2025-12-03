@@ -1,5 +1,6 @@
 from collections import deque
 from utils.saida import imprimir_despacho 
+from classes.processo import Processo
 
 class Escalonador:
     def __init__(self, gerenciador_recursos=None, sistema_arquivos=None, gerenciador_memoria=None):
@@ -15,6 +16,12 @@ class Escalonador:
 
     # Se a fila global ainda tiver espaco, adiciona o processo
     def adicionar_processo(self, processo):
+        limite_memoria = 64 if processo.tipo == 'RT' else 960
+    
+        if processo.blocos_memoria > limite_memoria:
+            print(f"ERRO CRÍTICO: Processo {processo.pid} rejeitado. Requisita {processo.blocos_memoria} blocos (Máx permitido: {limite_memoria}).")
+            return  # Não adiciona na fila, descarta o processo imediatamente
+    # --- FIX END ---
         if len(self.fila_global) + self._total_processos_ativos() < self.max_processos:
             self.fila_global.append(processo)
         else:
