@@ -21,7 +21,6 @@ class Escalonador:
         if processo.blocos_memoria > limite_memoria:
             print(f"ERRO CRÍTICO: Processo {processo.pid} rejeitado. Requisita {processo.blocos_memoria} blocos (Máx permitido: {limite_memoria}).")
             return  # Não adiciona na fila, descarta o processo imediatamente
-    # --- FIX END ---
         if len(self.fila_global) + self._total_processos_ativos() < self.max_processos:
             self.fila_global.append(processo)
         else:
