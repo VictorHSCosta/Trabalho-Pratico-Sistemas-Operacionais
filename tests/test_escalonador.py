@@ -8,10 +8,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from classes.processo import Processo
 from classes.escalonador import Escalonador
+from classes.gerenciador_memoria import GerenciadorMemoria
 
 class TestEscalonador(unittest.TestCase):
+    
     def setUp(self):
-        self.escalonador = Escalonador()
+        self.memoria = GerenciadorMemoria()
+        self.escalonador = Escalonador(gerenciador_memoria=self.memoria)
 
     def test_adicionar_processo(self):
         p = Processo(pid=1, tipo='RT', prioridade=0, tempo_execucao=10, blocos_memoria=50)
