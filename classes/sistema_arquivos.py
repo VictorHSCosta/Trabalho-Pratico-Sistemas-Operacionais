@@ -19,6 +19,11 @@ class SistemaArquivos:
 
     def criar_arquivo(self, processo, nome, tamanho, verbose=True):
         """Cria um arquivo usando First-Fit"""
+        if tamanho > self.total_blocos:
+            if verbose:
+                print(f"Erro: Processo {processo.pid} tentou criar '{nome}' com {tamanho} blocos (Disco só tem {self.total_blocos}).")
+            self._registrar_resultado(False, motivo="tamanho_excede_disco")
+            return False
         if nome in self.arquivos:
             if verbose:
                 print(f"Erro: Arquivo {nome} já existe.")
